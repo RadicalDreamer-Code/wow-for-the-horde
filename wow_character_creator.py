@@ -5,6 +5,7 @@ and clicking at specified coordinates.
 """
 
 import json
+import random
 import time
 from datetime import datetime
 from typing import Optional, Tuple
@@ -48,6 +49,7 @@ class WoWCharacterCreator:
                 "spineshatter_selection_confirm_confirm": {"x": 307, "y": 338},
                 "bloodelf_selection": {"x": 137, "y": 266},
                 # "bloodelf_selection": {"x": 63, "y": 266},
+                "open_create_new_character": {"x": 604, "y": 465},
                 "creator_selection_back": {"x": 637, "y": 550},
                 "character_selection_back": {"x": 684, "y": 552},
                 "class_selection": {"x": 64, "y": 358},
@@ -301,6 +303,96 @@ class WoWCharacterCreator:
             print(f"\n\nError during creation: {e}")
             return False
 
+    def quick_create_character(self, character_name: str):
+        """Execute the character creation sequence."""
+        print("\n=== Starting Character Creation ===")
+        print("You have 5 seconds to switch to WoW window...")
+        time.sleep(5)
+
+        if not self.find_window():
+            return False
+
+        self.bring_window_to_front()
+
+        try:
+            character_count = 0
+
+            while True:
+                character_count += 1
+                print(f"\n=== Creating Character #{character_count} ===")
+
+                # add delay to allow realm to load
+                time.sleep(2)
+
+                print("1. Clicking to open create new character...")
+                self.click_coordinate(
+                    "open_create_new_character", delay=1 + random.uniform(1, 2)
+                )
+
+                time.sleep(3)
+
+                print("2. Checking if Blood Elf is selectable...")
+                bloodelf_coord = self.config["coordinates"]["bloodelf_selection"]
+                if not self.is_icon_clickable(
+                    bloodelf_coord["x"], bloodelf_coord["y"], threshold=30
+                ):
+                    print("Blood Elf is grayed out - skipping character creation")
+                    print("7. Going back from creator...")
+                    self.click_coordinate(
+                        "creator_selection_back", delay=1 + random.uniform(1, 2)
+                    )
+
+                    # print("8. Going back again...")
+                    # self.click_coordinate("character_selection_back", delay=1)
+
+                    print(f"\n=== Character #{character_count} Creation Failed! ===")
+                    print("Starting next try in 2 seconds...")
+                    continue
+
+                print("Blood Elf is clickable - selecting...")
+                self.click_coordinate(
+                    "bloodelf_selection", delay=12 + random.uniform(1, 2)
+                )
+
+                # TODO: Select class
+                print("Selecting class...")
+                self.click_coordinate("class_selection", delay=2 + random.uniform(1, 2))
+
+                # Type character name
+                print(f"9. Typing character name: {character_name}")
+                self.type_text(character_name, interval=0.1)
+                time.sleep(1)
+
+                print("10. Accepting character creation...")
+                self.click_coordinate("accept", delay=5 + random.uniform(1, 2))
+
+                print("11. Final confirmation...")
+                self.click_coordinate("final_confirm", delay=10 + random.uniform(1, 2))
+
+                # Save completion log
+                now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                log_message = f"[{now}] Character created successfully after {character_count} attempt(s)\n"
+                with open("character_creation_log.txt", "a") as log_file:
+                    log_file.write(log_message)
+
+                # Schedule shutdown in 1 minute
+                # print("Scheduling system shutdown in 1 minute...")
+                # import subprocess
+
+                # subprocess.run(["shutdown", "/s", "/t", "60"], check=False)
+                # print("Shutdown scheduled. Run 'shutdown /a' to abort.")
+
+                break
+
+                time.sleep(2)
+
+        except KeyboardInterrupt:
+            print(f"\n\nScript interrupted! Created {character_count} character(s).")
+            return False
+        except Exception as e:
+            print(f"\n\nError during creation: {e}")
+            return False
+
     def get_mouse_position(self):
         """Helper function to show current mouse position when inside the WoW window."""
         if not self.find_window():
@@ -339,11 +431,11 @@ def main():
     """Main execution function."""
     print("=== WoW Character Creator ===\n")
     print("What would you like to do?")
-    print("1. Create a character")
-    print("2. Get mouse coordinates (helper mode)")
+    print("1. With logout and login")
+    print("2. Try for a quick character create")
+    print("3. Get mouse coordinates (helper mode)")
 
-    choice = input("\nEnter choice (1 or 2): ").strip()
-
+    choice = input("\nEnter choice (1, 2, or 3): ").strip()
     creator = WoWCharacterCreator()
 
     if choice == "1":
@@ -355,6 +447,13 @@ def main():
         creator.create_character(char_name)
 
     elif choice == "2":
+        char_name = input("Enter character name: ").strip()
+        if not char_name:
+            print("Character name required!")
+            return
+        creator.quick_create_character(char_name)
+
+    elif choice == "3":
         creator.get_mouse_position()
 
     else:
