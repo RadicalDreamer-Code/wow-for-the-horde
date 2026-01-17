@@ -351,7 +351,7 @@ class WoWCharacterCreator:
 
                 print("Blood Elf is clickable - selecting...")
                 self.click_coordinate(
-                    "bloodelf_selection", delay=12 + random.uniform(1, 2)
+                    "bloodelf_selection", delay=4 + random.uniform(1, 2)
                 )
 
                 # TODO: Select class
@@ -364,10 +364,10 @@ class WoWCharacterCreator:
                 time.sleep(1)
 
                 print("10. Accepting character creation...")
-                self.click_coordinate("accept", delay=5 + random.uniform(1, 2))
+                self.click_coordinate("accept", delay=2 + random.uniform(1, 2))
 
                 print("11. Final confirmation...")
-                self.click_coordinate("final_confirm", delay=10 + random.uniform(1, 2))
+                self.click_coordinate("final_confirm", delay=5 + random.uniform(1, 2))
 
                 # Save completion log
                 now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
